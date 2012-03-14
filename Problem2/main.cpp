@@ -11,63 +11,61 @@ int n,m;
 template <class T>
 class Matrix {
 private:
-	int count_stroka;
-	int count_stolbec;
-	T** S;
+	int numRows;
+	int numColumns;
+	vector<vector<T> > S;
 public:
 	Matrix<T>();
 	Matrix<T>( const Matrix<T>& );
-	Matrix<T>(int n , int n2);
+	Matrix<T>(int rows , int columns);
 	~Matrix<T>() {
-		for(int i = 0 ; i < count_stroka;i++){
-			delete S[i];
-		}
-		delete[] S;
+		FreeMemory();
 	}
-	T* operator[](int i)  {  
+	vector<T>& operator[](int i)  {  
 		return S[i];
 	}
-	const T* operator[](int i) const {
+	const vector<T>& operator[](int i) const {
 		return S[i];
 	}
 
 
 	Matrix<T>& operator = (const Matrix<T>& S2){
-		for(int i = 0 ; i < count_stroka;i++){
-			delete S[i];
-		}
-		delete[] S ;
-		
-		count_stroka = S2.count_stroka;
-		count_stolbec = S2.count_stolbec;
-		
-		S = new T* [count_stroka];      
-		for (int i = 0; i < count_stroka; i++)
-			S[i] = new T [count_stolbec];
-		for( int i = 0;i < count_stroka;i++ ){
-			for(int j = 0; j < count_stolbec; j++){
+		FreeMemory();	
+		numRows = S2.numRows;
+		numColumns = S2.numColumns;
+		S.resize(numRows);      
+		for (int i = 0; i < numRows; i++)
+			S[i].resize(numColumns);
+		for( int i = 0;i < numRows;i++ ){
+			for(int j = 0; j < numColumns; j++){
 				S[i][j] = S2.S[i][j];
 			}
 		}
 		return *this;
 	}
+	void FreeMemory(){
+		for(int i = 0 ; i < numRows;i++){
+			S[i].clear();
+		}
+		S.clear();
+	}
 
 	void Print()const {
-		for (int i = 0; i < count_stroka; i++){
-			for(int j = 0 ; j < count_stolbec; j++){
+		for (int i = 0; i < numRows; i++){
+			for(int j = 0 ; j < numColumns; j++){
 				printf("%.1d  ",S[i][j]);
 			}
 			printf("\n");
 		}
 	}
 	Matrix<T> operator + (const Matrix<T>& A)const {  
-		int n2 = count_stolbec;
-		int n = count_stroka;
-		assert(count_stroka == A.count_stroka);
-		assert(count_stolbec == A.count_stolbec);
-		Matrix<T> Summ(n,n2);  
-		for (int i = 0; i < n;i++){
-			for(int j = 0; j < n2;j++){
+		int columns = numColumns;
+		int rows = numRows;
+		assert(numRows == A.numRows);
+		assert(numColumns == A.numColumns);
+		Matrix<T> Summ(rows, columns);  
+		for (int i = 0; i < rows; i++){
+			for(int j = 0; j < columns; j++){
 				Summ[i][j] = S[i][j] + A[i][j];
 			}
 		}
@@ -75,13 +73,13 @@ public:
 	}
 
 	Matrix<T> operator - (const Matrix<T>& A) const{ 
-		assert(count_stroka == A.count_stroka);
-		assert(count_stolbec == A.count_stolbec);
-		int n2 = count_stolbec;
-		int n = count_stroka;
-		Matrix<T> Diff(n,n2);  
-		for (int i = 0; i < n;i++){
-			for(int j = 0; j < n2;j++){
+		assert(numRows == A.numRows);
+		assert(numColumns == A.numColumns);
+		int columns = numColumns;
+		int rows = numRows;
+		Matrix<T> Diff(rows,columns);  
+		for (int i = 0; i < rows; i++){
+			for(int j = 0; j < columns;j++){
 				Diff[i][j] = S[i][j] - A[i][j];
 			}
 		}
@@ -90,14 +88,14 @@ public:
 	}
 
 	Matrix<T> operator * (const Matrix<T>& A)const{ 
-		int n = count_stroka;
-		assert(count_stolbec == A.count_stroka);
-		int n2 = A.count_stolbec;
-		int n3 = count_stolbec;
-		Matrix<T> Mull(n,n2);
-		for( int i = 0; i < n; i++){
-			for(int j = 0; j < n2; j++){
-				for(int k = 0; k < n3; k++){
+		int rows = numRows;
+		assert(numColumns == A.numRows);
+		int columns = A.numColumns;
+		int secondColumns = numColumns;
+		Matrix<T> Mull(rows,columns);
+		for( int i = 0; i < rows; i++){
+			for(int j = 0; j < columns; j++){
+				for(int k = 0; k < secondColumns; k++){
 					Mull[i][j] += S[i][k] * A[k][j];
 				}
 			}
@@ -110,34 +108,34 @@ public:
 template <class T>
 Matrix<T>::Matrix()
 {		
-	count_stroka = 0;
-	count_stolbec = 0;
-	S = NULL;
+	numRows = 0;
+	numColumns = 0;
+	S.resize(0);
 }
 template <class T>
-Matrix<T>::Matrix( const Matrix<T>& p){
+Matrix<T>::Matrix( const Matrix<T>& copyMatrix){
 	
-	S = new T* [p.count_stroka];      
-	for (int i = 0; i < p.count_stroka; i++)
-		S[i] = new T [p.count_stolbec];
-	count_stolbec = p.count_stolbec;
-	count_stroka = p.count_stroka;
-	for(int i = 0;i < p.count_stroka;i++){
-		for(int j = 0; j < p.count_stolbec;j++){
-			S[i][j] = p[i][j];
+	S.resize(copyMatrix.numRows);      
+	for (int i = 0; i < copyMatrix.numRows; i++)
+		S[i].resize(copyMatrix.numColumns);
+	numColumns = copyMatrix.numColumns;
+	numRows = copyMatrix.numRows;
+	for(int i = 0;i < copyMatrix.numRows;i++){
+		for(int j = 0; j < copyMatrix.numColumns; j++){
+			S[i][j] = copyMatrix[i][j];
 		}
 	}
 }
 template <class T>
-Matrix<T>::Matrix( int n , int n2 )
+Matrix<T>::Matrix( int rows , int columns )
 {	
-	count_stroka = n;
-	count_stolbec = n2;
-	S = new T* [n];      
-	for (int i = 0; i < n; i++)
-		S[i] = new T [n2];
-	for( int i = 0;i < count_stroka;i++ ){
-		for(int j = 0; j < count_stolbec; j++){
+	numRows = rows;
+	numColumns = columns;
+	S.resize(rows);      
+	for (int i = 0; i < rows; i++)
+		S[i].resize(columns);
+	for( int i = 0;i < numRows;i++ ){
+		for(int j = 0; j < numColumns; j++){
 			S[i][j] = 0;
 		}
 	}
@@ -201,22 +199,31 @@ T pow(T a, int n, typename BinaryOperation<T> f){
 	}
 	return res;
 }
-
-int main(){
+void CheckFibonacci(){
 	IMatrix A(2,2);
-	A[0][0] = 7;
-	A[0][1] = 3;
-	A[1][0] = 4;
-	A[1][1] = 6;
-	A.Print();
+	A[0][0] = 1;
+	A[0][1] = 1;
+	A[1][0] = 1;
+	A[1][1] = 0;
+	int n;
+	cout << "entered fibonacci index n\n";
+	cin >> n;
 	MultOperation<IMatrix> f;
-	SummOperation<int> fint;
-	int a = 4;
-	IMatrix matr = pow<IMatrix,MultOperation >(A,2,f);
-	matr.Print();
-	
-	a = pow<int,SummOperation >(a,4,fint);
-	cout << a << endl ;
+	IMatrix matr = pow<IMatrix,MultOperation >(A,n,f);
+	cout << "n fibonacci number:" << matr[1][0] << endl;
+}
+
+void CheckSumm(){
+	MultOperation<int> fint;
+	int a,n;
+	cout << "entered number a\n";
+	cin >> a;
+	cout << "entered degree\n";
+	cin >> n;
+	a = pow<int,MultOperation >(a, n, fint);
+	cout << "a in n degree:" << a << endl;
+}
+void CheckParket(){
 	cout << "entered n\n";
 	cin >> n;
 	cout << "entred m\n";
@@ -229,6 +236,12 @@ int main(){
 		for (int mask = 0; mask < (1 << m); ++mask){
 			calc<int, SummOperation>(i, 0, mask, 0, cover);
 		}
-		cout << D[n][0];
+		cout <<"count different parket:" << D[n][0] << endl;
+}
+
+int main(){
+	CheckFibonacci();	
+	CheckSumm();
+	CheckParket();
 	return 0;
 }

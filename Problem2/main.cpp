@@ -58,7 +58,7 @@ public:
 			printf("\n");
 		}
 	}
-	Matrix<T> operator + (const Matrix<T>& A)const {  
+	Matrix<T> operator + (const Matrix<T>& A) const {  
 		int columns = numColumns;
 		int rows = numRows;
 		assert(numRows == A.numRows);
@@ -213,7 +213,7 @@ void CheckFibonacci(){
 	cout << "n fibonacci number:" << matr[1][0] << endl;
 }
 
-void CheckSumm(){
+void CheckMult(){
 	MultOperation<int> fint;
 	int a,n;
 	cout << "entered number a\n";
@@ -223,6 +223,7 @@ void CheckSumm(){
 	a = pow<int,MultOperation >(a, n, fint);
 	cout << "a in n degree:" << a << endl;
 }
+
 void CheckParket(){
 	cout << "entered n\n";
 	cin >> n;
@@ -239,9 +240,65 @@ void CheckParket(){
 		cout <<"count different parket:" << D[n][0] << endl;
 }
 
+int SimpleFibonacci(int number){
+	int current = 0;
+	int result = 1;
+	for(int i = 0; i < number - 1; i++){
+		result = result + current;
+		current = result - current;
+	}
+	return result;
+}
+int SimpleMult(int number, int degree){
+	int result = number;
+	for(int i = 0; i < degree - 1; i++){
+		result *=number;
+	}
+	return result;
+}
+
+int CurrentTest(int index){
+	IMatrix A(2,2);
+	A[0][0] = 1;
+	A[0][1] = 1;
+	A[1][0] = 1;
+	A[1][1] = 0;
+	MultOperation<IMatrix> f;
+	IMatrix matr = pow<IMatrix, MultOperation >(A, index, f);
+	return matr[1][0];
+}
+
+int CurrentMult(int number, int degree){
+	MultOperation<int> fint;
+	return pow<int, MultOperation >(number, degree, fint);
+}
+void TestRandomFibonacciSequence(int sead){
+	srand(sead);
+	int example = rand() % 40;
+	assert(CurrentTest(example) == SimpleFibonacci(example));
+}
+void TestFibonacci(){
+	for(int i = 0; i < 1000; i++){
+		TestRandomFibonacciSequence(i);
+	}
+}
+
+void TestRandomMultSequence(int sead){
+	srand(sead);
+	int example = rand() % 50;
+	int degree = rand() % 10;
+	assert(CurrentMult(example, degree) == SimpleMult(example, degree));
+}
+void TestMult(){
+	for(int i = 0; i < 1000; i++){
+		TestRandomMultSequence(i);
+	}
+}
 int main(){
-	CheckFibonacci();	
-	CheckSumm();
+	TestFibonacci();
+	TestMult();
+	CheckFibonacci();
+	CheckMult();
 	CheckParket();
 	return 0;
 }

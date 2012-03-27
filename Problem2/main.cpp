@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <string>
 #include <vector>
+#include <fstream> 
 using namespace std;
 
 int n,m;
@@ -28,21 +29,6 @@ public:
 		return S[i];
 	}
 
-
-	Matrix<T>& operator = (const Matrix<T>& S2){
-		FreeMemory();	
-		numRows = S2.numRows;
-		numColumns = S2.numColumns;
-		S.resize(numRows);      
-		for (int i = 0; i < numRows; i++)
-			S[i].resize(numColumns);
-		for( int i = 0;i < numRows;i++ ){
-			for(int j = 0; j < numColumns; j++){
-				S[i][j] = S2.S[i][j];
-			}
-		}
-		return *this;
-	}
 	void FreeMemory(){
 		for(int i = 0 ; i < numRows;i++){
 			S[i].clear();
@@ -56,6 +42,16 @@ public:
 				printf("%.1d  ",S[i][j]);
 			}
 			printf("\n");
+		}
+	}
+	void StreamPrint() const {
+		ofstream out;
+		out.open("output.txt");
+		for (int i = 0; i < numRows; i++){
+			for(int j = 0 ; j < numColumns; j++){
+				out << S[i][j] << " ";
+			}
+			out << "\n";
 		}
 	}
 	Matrix<T> operator + (const Matrix<T>& A) const {  
@@ -295,6 +291,12 @@ void TestMult(){
 	}
 }
 int main(){
+	Matrix<int> S(2,2);
+	S[0][0] = 1;
+	S[0][1] = 2;
+	S[1][0] = 0;
+	S[1][1] = 4;
+	S.StreamPrint();
 	TestFibonacci();
 	TestMult();
 	CheckFibonacci();

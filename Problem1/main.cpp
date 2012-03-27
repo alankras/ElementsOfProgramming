@@ -6,91 +6,88 @@
 #include <assert.h>
 using namespace std;
 
-vector<int> operator + (const vector<int> &V, const int a) {
+vector<int> operator + (const vector<int> &v, const int a) {
 	vector<int> result;
-	result.resize(V.size());
-	for(unsigned int i = 0; i < V.size(); i++){
-		result[i] = (V[i] + a);	
+	result.resize(v.size());
+	for(unsigned int i = 0; i < v.size(); i++){
+		result[i] = (v[i] + a);	
 	}
 	return result;
 }
 
-vector<int> operator ++ (vector<int> &V) {
-	for(unsigned int i = 0; i < V.size(); i++){
-		V[i] = (V[i] + 1);	
+vector<int> operator ++ (vector<int> &v) {
+	for(unsigned int i = 0; i < v.size(); i++){
+		v[i] = (v[i] + 1);	
 	}
-	return V;
+	return v;
 }
 
-vector<int> operator + (const vector<int> &V, const vector<int> &V2) {
+vector<int> operator + (const vector<int> &v, const vector<int> &v2) {
 	vector<int> result;
-	result.resize(V.size());
-	for(unsigned int i = 0; i < V.size(); i++){
-		result[i] = (V[i] + V2[i]);	
+	result.resize(v.size());
+	for(unsigned int i = 0; i < v.size(); i++){
+		result[i] = (v[i] + v2[i]);	
 	}
 	return result;
 }
 
-bool operator != (const vector<int> &V, const vector<int> &V2) {
+vector<int> operator * (const vector<int> &v, const vector<int> &v2) {
 	vector<int> result;
-	result.resize(V.size());
-	for(unsigned int i = 0; i < V.size(); i++){
-		if (V[i] != V2[i]) return true;	
-	}
-	return false;
-}
-
-vector<int> operator * (const vector<int> &V, const vector<int> &V2) {
-	vector<int> result;
-	result.resize(V.size());
-	for(unsigned int i = 0; i < V.size(); i++){
-		result[i] = (V[i] * V2[i]);	
+	result.resize(v.size());
+	for(unsigned int i = 0; i < v.size(); i++){
+		result[i] = (v[i] * v2[i]);	
 	}
 	return result;
 }
 
-vector<int> operator * (vector<int> &V, int a) {
+vector<int> operator * (vector<int> &v, int a) {
 	vector<int> result;
-	result.resize(V.size());
-	for(unsigned int i = 0; i < V.size(); i++){
-		result[i] = (V[i] * a);	
+	result.resize(v.size());
+	for(unsigned int i = 0; i < v.size(); i++){
+		result[i] = (v[i] * a);	
 	}
 	return result;
 }
 
-vector<int> operator % (const vector<int> &V, const int n) {
+vector<int> operator % (const vector<int> v, const int n) {
 	vector<int> result;
-	result.resize(V.size());
-	for(unsigned int i = 0; i < V.size(); i++){
-		result[i] = V[i] % n;	
+	result.resize(v.size());
+	for(unsigned int i = 0; i < v.size(); i++){
+		result[i] = v[i] % n;	
 	}
 	return result;
 }
 
-ostream& operator << (ostream& out , const vector<int>& V) {
-	for(unsigned int i = 0; i < V.size(); ++i) {
-		out << V[i] << endl;
+ostream& operator << (ostream& out , const vector<int>& v) {
+	for(unsigned int i = 0; i < v.size(); ++i) {
+		out << v[i] << endl;
 	}
 	return out;
 }
 
 template<class T> class GlobalFunctor{
 public:
-	T virtual operator() (const T &x) = 0;
+	T virtual operator() (const T &x) const = 0;
+	virtual int getModule() const = 0;
 };
 
 template <class T> class Functor : public GlobalFunctor<T>{
 public:
 	Functor(int module) : module_(module) { }
-	T operator()(const T &x) {
+    T operator()(const T &x) const {
 		T cur = (x + x) % module_;
 		return cur;
+	}
+	int getModule() const{
+		return module_;
 	}
 private:
 	int module_;
 };
 
-template <class T> int function(GlobalFunctor<T> &func, T x, int n){
+template <class T, template<class> class D> 
+int preCycleLength(const D<T> &func, T x){
+	int n = func.getModule();
 	T current = x;
 	for(int i = 0; i < n + 1; i++){
 		current = func(current);
@@ -117,9 +114,10 @@ template <class T> int function(GlobalFunctor<T> &func, T x, int n){
 template <class T> class GraphFunctor : public GlobalFunctor<T>{
 private:
 	map<T, T> nextElement;
-
+	int module;
 public:
 	GraphFunctor(int clength, int plength, T startElement){
+		module = plength;
 		T count = startElement;
 		T prev = startElement;
 		for(int i = 0; i < plength; i++){
@@ -136,15 +134,18 @@ public:
 		nextElement[prev] = firstCycleElement;
 	}
 	
-	T operator()(const T &x) {
-		T cur = nextElement[x];
+  	T operator()(const T &x) const {
+		T cur = (nextElement.find(x)) -> second;
 		return cur;
+	}
+	int getModule() const {
+		return module;
 	}
 };
 
 void testCycleIntegerSequence(int clength, int plength){
 	GraphFunctor<int> f(clength, plength, 0);
-	assert(function(f, 0, plength) == plength);
+	assert(preCycleLength(f, 0) == plength);
 }
 
 void testRandomIntegerSequence(int sead){
@@ -164,7 +165,7 @@ void testCycleVectorSequence(int clength, int plength){
 		tester[i] = i;
 	}
 	GraphFunctor<vector<int> > ff(clength, plength, tester);
-	assert(function(ff, tester, plength) == plength);
+	assert(preCycleLength(ff, tester) == plength);
 }
 
 void testRandomVectorSequence(int sead){
@@ -176,17 +177,17 @@ void testVectorSequence(){
 }
 
 int main(){
-	Functor<int> ff(10);
-	vector<int> V;
-	V.resize(3);
-	V[0] = 1;
-	V[1] = 2;
-	V[2] = 3;
 	cout << "print n\n";
 	int n;
 	cin >> n;
+	Functor<int> ff(n);
+	vector<int> v;
+	v.resize(3);
+	v[0] = 1;
+	v[1] = 2;
+	v[2] = 3;	
 	int x = 3;
-	cout << "answer = " << function(ff, x, n) << endl;
+	cout << "answer = " << preCycleLength<int, Functor>(ff, x) << endl;
 	testIntegerSequence();
 	testVectorSequence();
 	return 0;

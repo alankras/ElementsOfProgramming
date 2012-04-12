@@ -6,7 +6,7 @@
 #include <assert.h>
 using namespace std;
 
-vector<int> operator + (const vector<int> &v, const int a) {
+vector<int> addScalar (const vector<int> &v, const int a) {
 	vector<int> result;
 	result.resize(v.size());
 	for(unsigned int i = 0; i < v.size(); i++){
@@ -16,34 +16,39 @@ vector<int> operator + (const vector<int> &v, const int a) {
 }
 
 vector<int> operator ++ (vector<int> &v) {
-	for(unsigned int i = 0; i < v.size(); i++){
+	for(size_t i = 0; i < v.size(); i++){
 		v[i] = (v[i] + 1);	
 	}
 	return v;
 }
 
-vector<int> operator + (const vector<int> &v, const vector<int> &v2) {
+/*vector<int> incrementElements (vector<int> &v) {
+	for(size_t i = 0; i < v.size(); i++){
+		v[i] = (v[i] + 1);	
+	}
+	return v;
+}*/
+
+vector<int> operator + (const vector<int> &first, const vector<int> &second) {
 	vector<int> result;
-	result.resize(v.size());
-	for(unsigned int i = 0; i < v.size(); i++){
-		result[i] = (v[i] + v2[i]);	
+	result.resize(first.size());
+	for(size_t i = 0; i < first.size(); i++){
+		result[i] = (first[i] + second[i]);	
 	}
 	return result;
 }
 
-vector<int> operator * (const vector<int> &v, const vector<int> &v2) {
-	vector<int> result;
-	result.resize(v.size());
-	for(unsigned int i = 0; i < v.size(); i++){
-		result[i] = (v[i] * v2[i]);	
+vector<int> operator * (const vector<int> &first, const vector<int> &second) {
+	vector<int> result(first.size());
+	for(size_t i = 0; i < first.size(); i++){
+		result[i] = (first[i] * second[i]);	
 	}
 	return result;
 }
 
-vector<int> operator * (vector<int> &v, int a) {
-	vector<int> result;
-	result.resize(v.size());
-	for(unsigned int i = 0; i < v.size(); i++){
+vector<int> operator * (const vector<int> &v, int a) {
+	vector<int> result(v.size());
+	for(size_t i = 0; i < v.size(); i++){
 		result[i] = (v[i] * a);	
 	}
 	return result;
@@ -52,14 +57,14 @@ vector<int> operator * (vector<int> &v, int a) {
 vector<int> operator % (const vector<int> v, const int n) {
 	vector<int> result;
 	result.resize(v.size());
-	for(unsigned int i = 0; i < v.size(); i++){
+	for(size_t i = 0; i < v.size(); i++){
 		result[i] = v[i] % n;	
 	}
 	return result;
 }
 
 ostream& operator << (ostream& out , const vector<int>& v) {
-	for(unsigned int i = 0; i < v.size(); ++i) {
+	for(size_t i = 0; i < v.size(); ++i) {
 		out << v[i] << endl;
 	}
 	return out;
@@ -87,9 +92,8 @@ private:
 
 template <class T, template<class> class D> 
 int preCycleLength(const D<T> &func, T x){
-	int n = func.getModule();
 	T current = x;
-	for(int i = 0; i < n + 1; i++){
+	for(int i = 0; i < func.getModule() + 1; i++){
 		current = func(current);
 	}
 	T element = func(current);

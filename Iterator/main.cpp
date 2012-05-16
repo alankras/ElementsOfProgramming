@@ -9,7 +9,7 @@
 #include "assert.h"
 using namespace std;
 
-#define UNDEFINED -1
+const int UNDEFINED = -1;
 
 class Graph {
 
@@ -19,17 +19,20 @@ class Graph {
 		vector<int> parent;
 		class DFSIterator{
 			public:
-				DFSIterator(const Graph& graph) : begin(&graph), current(0){ }
+				DFSIterator(const Graph* graph) : begin(graph), current(0){ }
 				int operator *() const{
 					return current;
 				}
 
-				DFSIterator operator ++ () {
-					current = begin -> DFS_VISIT(current);
+				DFSIterator& operator ++ () {
+					current = begin -> dfsVisit(current);
+					if (current== UNDEFINED) {
+						begin = 0;
+					}
 					return *this;
 				}
 
-				bool operator != (const DFSIterator& it) {
+				bool operator!= (const DFSIterator& it) const {
 					if (current == *it) return false;
 					 return true;
 				}
@@ -41,22 +44,34 @@ class Graph {
 		};
 
 	public:
+		friend ostream& operator << (ostream& out , const Graph& str) ;
 		typedef DFSIterator iterator;
-		Graph(int count){
-			vector<int> current(count, -1);
+		explicit Graph(int count) : color(count, UNDEFINED),
+									parent(count, UNDEFINED)
+		{
+			vector<int> current(count, UNDEFINED);
+			storage.reserve(count);
+
 			for(int i = 0; i < count; i++){ 
 				storage.push_back(current);
-				color.push_back(-1);
-				parent.push_back(-1);
 			}
 		}
+		vector<int>& operator[](size_t i) {
+			return storage[i];
+		}
+
+		const vector<int>& operator[](size_t i) const {   //char*
+			return storage[i];
+		}
+
 		iterator end(){
-			iterator endIt(*this);
-			for(size_t i = 0; i < storage.size(); i++) {
-				++endIt;
-			}
-			return endIt;
+			return iterator(0);
 		}
+
+		int size() const{
+			return storage.size();
+		}
+
 		bool AddEdge(unsigned int v1, unsigned int v2,int dist){
 			if ((v1 <= storage.size()) && (v2 <= storage.size())){
 				storage[v1][v2] = dist;
@@ -75,43 +90,32 @@ class Graph {
 			return false;		
 		}
 
-		void PrintGraph(){
-			for(unsigned int i = 0; i < storage.size();i++){
-				for(unsigned int j = 0; j < storage[i].size(); j++){
-					if (storage[i][j] != -1) printf("%d - %d\n", i, j);
-				}
-			}			
-		}
-
-		bool IsEdgePresent(int v1, int v2){
-			if (storage[v1][v2] != NULL) return true;	
-			else return false;		
-		}
-
-		int DFS_VISIT(int v1) const {
+		int dfsVisit(int sourceVertex) const {
 			int d = -1;
 			while(true) {
-				if (v1 != -1) {
-					for(int i = 0; i < storage[v1].size(); i++) {
-						if ((storage[v1][i] != -1) && ( i > d)) return i;
+				if (sourceVertex != -1) {
+					for(int i = 0; i < static_cast<int>(storage[sourceVertex].size()); i++) {
+						if ((storage[sourceVertex][i] != -1) && ( i > d)) {
+							return i;
+						}
 					}
 				}
-				d = v1;
-				v1 = parent[v1];
-				if (v1 == -1) { 
+				d = sourceVertex;
+				sourceVertex = parent[sourceVertex];
+				if (sourceVertex == UNDEFINED) { 
 					return UNDEFINED;
 				}
 			}
 		}
 
-	vector<int> BFS(int v1){
+	vector<int> bfs(int sourceVertex){
 		vector<int> bfs;
 		for(unsigned int i = 0; i < color.size(); i++){
 			color[i] = 1;
 		}
-		color[v1] = -1;
+		color[sourceVertex] = -1;
 		queue<int> Q;
-		Q.push(v1);
+		Q.push(sourceVertex);
 		while (!Q.empty()){
 			int u = Q.front();
 			bfs.push_back(u);
@@ -124,14 +128,25 @@ class Graph {
 			}
 			color[u] = 0;
 		}
-		for(unsigned int i = 0; i < storage.size(); i++){
-			color[i] = 1;
-		}
+//		fill(color.begin(), color.end(), 1);
+		
 		return bfs;
 	}
 };
 
-void restoreGraph(Graph::iterator& beginIt, Graph::iterator& endIt, const vector<int>& bfs, Graph* result) {
+ostream& operator << (ostream& out , const Graph& str) {
+	for(unsigned int i = 0; i < str.size();i++){
+		for(unsigned int j = 0; j < str.size(); j++){
+			if (str[i][j] != -1) {
+				out << i << "-" << j << endl;
+			}
+		}
+	}	
+	return out;
+}
+
+void restoreGraph(Graph::iterator beginIt, Graph::iterator endIt, const vector<int>& bfs, Graph* result, vector<int> visitedVertex, const vector<int>& startBfs) {
+	if (bfs.size() == 1) return;
 	if (bfs.size() == 2) {
 		result -> AddEdge(bfs[0], bfs[1], 1);
 	}
@@ -146,80 +161,140 @@ void restoreGraph(Graph::iterator& beginIt, Graph::iterator& endIt, const vector
 			result -> AddEdge(bfs[1], bfs[2], 1);
 		}
 		else {
-			result -> AddEdge(bfs[0], bfs[1], 1);
-			result -> AddEdge(bfs[0], bfs[2], 1);
+			int p = distance(startBfs.begin(), find(startBfs.begin(), startBfs.end(), bfs[2]));
+			if (visitedVertex[startBfs[distance(startBfs.begin(), find(startBfs.begin(), startBfs.end(), bfs[2])) - 1]] == 1){
+				result -> AddEdge(bfs[0], bfs[1], 1);
+				result -> AddEdge(bfs[0], bfs[2], 1);
+			}
+			else {
+				result -> AddEdge(bfs[0], bfs[1], 1);
+				result -> AddEdge(bfs[1], bfs[2], 1);				
+			}
 		}
 
 	}
 	else {
 		Graph::iterator currentRootIt(beginIt);
+		visitedVertex[*beginIt] = 1;
 		++beginIt;
-		Graph::iterator copyBeginIt(beginIt);
-		Graph::iterator copy2BeginIt(beginIt);
+		visitedVertex[*beginIt] = 1;
+		Graph::iterator copyFirstBeginIt(beginIt);
+		Graph::iterator copySecondBeginIt(beginIt);
+		Graph::iterator copyThirdBeginIt(beginIt);
 		
 		unsigned int index = 2;
 		vector<int> vertexIndex;
 		while ((beginIt != endIt) && (*beginIt != UNDEFINED)){
-			while ((index + 1 < bfs.size()) && (bfs[index] != *beginIt) && (beginIt != endIt) && (*beginIt != UNDEFINED)) {
-				copy2BeginIt = beginIt;
+			while ((index < bfs.size()) && (bfs[index] != *beginIt) && (beginIt != endIt) && (*beginIt != UNDEFINED)) {
+				visitedVertex[*beginIt] = 1;
+				copySecondBeginIt = beginIt;
 				vertexIndex.push_back(distance(bfs.begin(), find(bfs.begin(), bfs.end(), *beginIt)));
 				++beginIt;
 			}
+			if (index == bfs.size()) {
+				result -> AddEdge(*copyThirdBeginIt, index - 1, 1); 
+			}
 			vector<int> bitBFS;
-			if (vertexIndex.size() == 1) {
+			/*if (vertexIndex.size() == 1) {
 				for(unsigned int i = 0; i < bfs.size() - 1; i++) {
 					bitBFS.push_back(bfs[i + 1]);
 				}
-				vertexIndex.clear();
-			}
-			else{
+			}*/
+			//else{
 				sort(vertexIndex.begin(), vertexIndex.end());
 				for(unsigned int i = 0; i < vertexIndex.size(); i++){
 					bitBFS.push_back(bfs[vertexIndex[i]]);
 				}
-				vertexIndex.clear();
-			}
-			if (bitBFS.size() > 0){
-				result -> AddEdge(*currentRootIt, *copyBeginIt, 1); 
-				restoreGraph(copyBeginIt, copy2BeginIt, bitBFS, result);
-			}
-			else return;
-			copyBeginIt = beginIt;
-			copy2BeginIt = beginIt;
+			//}
+			vertexIndex.clear();
+			if (bitBFS.empty()) return;
+
+			result -> AddEdge(*currentRootIt, *copyFirstBeginIt, 1); 
+			restoreGraph(copyFirstBeginIt, copySecondBeginIt, bitBFS, result, visitedVertex, startBfs);
+			copyThirdBeginIt = copyFirstBeginIt;
+			copyFirstBeginIt = beginIt;
+			copySecondBeginIt = beginIt;
 			index++;
 		}
+		if (*beginIt == *endIt) 
+			result -> AddEdge(*currentRootIt, *endIt, 1); 
 	}
 }
 
-void testRestore(Graph::iterator& beginIt, Graph::iterator& endIt, vector<int> bfs, Graph& restoreGraph) {
+int testRestore(Graph::iterator beginIt, Graph::iterator endIt, vector<int> bfs, Graph* restoreGraph, int countMistake) {
 	Graph::iterator it(restoreGraph);
 	while (beginIt != endIt){
 		assert(*beginIt == *it);
 		++beginIt;
 		++it;
 	}
-	vector<int> restoreBFS = restoreGraph.BFS(0);
+	bool flag = true;
+	vector<int> restoreBFS = restoreGraph -> bfs(0);
+	if (restoreBFS.size() != bfs.size()) return ++countMistake;
 	for(unsigned int i = 0 ; i < bfs.size(); i++){
-		assert(bfs[i] == restoreBFS[i]);
+		if (bfs[i] != restoreBFS[i]){ 
+			flag = false;
+		}
 	}
-	
+	if (flag == false) 
+		return ++countMistake;
+	else return countMistake;
 }
 void checkRestore() {
-	Graph p(6);
+	Graph p(9);
 	p.AddEdge(0, 1, 5);
-	p.AddEdge(0, 2, 4);
-	p.AddEdge(0, 3, 3);
-	p.AddEdge(1, 4, 6);
-	p.AddEdge(1, 5, 1);
-	vector<int> bfs = p.BFS(0);
-	Graph::iterator beginIt(p);
+	p.AddEdge(0, 4, 1);
+	p.AddEdge(0, 5, 1);
+	p.AddEdge(1, 2, 1);
+	p.AddEdge(1, 3, 1);
+	p.AddEdge(2, 8, 1);
+	p.AddEdge(5, 6, 1);
+	p.AddEdge(6, 7, 1);
+	cout << p;
+	vector<int> bfs = p.bfs(0);
+	Graph::iterator beginIt(&p);
 	Graph::iterator endIt = p.end();
 	Graph result(bfs.size());
-	restoreGraph(beginIt, endIt, bfs, &result);
+	vector<int> visitedVertex(bfs.size(), 0);
+	restoreGraph(beginIt, endIt, bfs, &result, visitedVertex, bfs);
 	Graph& restore = result;
-	testRestore(beginIt, endIt, bfs, restore);
+	cout << testRestore(beginIt, endIt, bfs, &restore, 0);
+	
+}
+
+int creationTest(int size, int randomConst, int countMistake) {
+	Graph p(size);
+	if (size > 1) { 
+		p.AddEdge(0, 1, 1);
+		for(int i = 2; i < size; i++) {
+			srand(i * randomConst);
+			int random = rand() % i;
+			p.AddEdge(random, i, 1);
+		}
+		vector<int> bfs = p.bfs(0);
+		Graph::iterator beginIt(&p);
+		Graph::iterator endIt = p.end();
+		Graph result(bfs.size());
+		vector<int> visitedVertex(bfs.size(), 0);
+		restoreGraph(beginIt, endIt, bfs, &result, visitedVertex, bfs);
+		Graph& restore = result;
+		int current = countMistake;
+		countMistake = testRestore(beginIt, endIt, bfs, &restore, countMistake);
+		if (countMistake != current) cout << p << endl << "size = " << endl << size << "========" << endl;
+	}
+	return countMistake;
+}
+
+void bigTest() {
+	int countMistake = 0;
+	for(int i = 0; i < 1000; i++) {
+		srand(i);
+		countMistake = creationTest(rand() % 10, rand() % 100, countMistake);
+	}
+	cout << countMistake;
 }
 int main() {
 	checkRestore();
+	bigTest();
 	return 0;
 }

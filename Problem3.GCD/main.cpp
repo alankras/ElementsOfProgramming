@@ -15,7 +15,7 @@ public:
 		denominator = 1;
 	}
 
-	Fraction(int numerator_, int denominator_){
+	Fraction(int numerator_, int denominator_) {
 		numerator = numerator_;
 		denominator = denominator_;
 		reduction();
@@ -58,6 +58,7 @@ public:
 		return *this;
 	}
 	
+	
 	Fraction operator = (Fraction fract){
 		numerator = fract.getNumerator();
 		denominator = fract.getDenominator();		
@@ -71,7 +72,7 @@ public:
 	}
 
 
-	Fraction operator + (Fraction& fract) const{
+	Fraction operator + (const Fraction& fract) const{
 		Fraction result;
 		result.setNumerator(numerator * fract.getDenominator() + fract.getNumerator() * denominator);
 		result.setDenominator(denominator * fract.getDenominator());
@@ -84,7 +85,7 @@ public:
 		return *this + tmp;
 	}
 
-	Fraction operator - (Fraction& fract) const{
+	Fraction operator - (const Fraction& fract) const{
 		Fraction result;
 		result.setNumerator(numerator * fract.getDenominator() - fract.getNumerator() * denominator);
 		result.setDenominator(denominator * fract.getDenominator());
@@ -123,39 +124,39 @@ public:
 		return *this / tmp;
 	}
 
-	bool operator < (Fraction& fract){
+	bool operator < (const Fraction& fract) const {
 		Fraction tmp = *this - fract; 
 		if ((tmp.getNumerator() > 0) && (tmp.getDenominator() > 0)) return false; 
 		if ((tmp.getNumerator() < 0) && (tmp.getDenominator() < 0)) return false;
 		return true;
 	}
 
-	bool operator < (int fract){
+	bool operator < (int fract) const {
 		Fraction tmp(fract);
 		return *this < tmp; 
 	}
 
-	bool operator > (Fraction& fract){
+	bool operator > (const Fraction& fract) const {
 		return fract < *this;
 	}
 
-	bool operator > (int fract){
+	bool operator > (int fract) const {
 		Fraction tmp(fract);
 		return tmp < *this ; 
 	}
 
 
-	bool operator == (Fraction& fract){
+	bool operator == (const Fraction& fract) const {
 		if ((fract.getNumerator() == numerator) && (fract.getDenominator() == denominator)) return true;
 		return false;
 	}
 
-	bool operator == (int fract){
+	bool operator == (int fract) const {
 		if ((numerator == fract) && (denominator == 1)) return true;
 		return false;
 	}
 
-	bool operator != (Fraction& fract){
+	bool operator != (const Fraction& fract) const {
 		if ((fract.getNumerator() != numerator) || (fract.getDenominator() != denominator)) return true;
 		return false;
 	}
@@ -165,21 +166,21 @@ public:
 		return false;
 	}
 
-	bool operator <= (Fraction& fract){
+	bool operator <= (const Fraction& fract) const {
 		if ((*this < fract) || (*this == fract)) return true;
 		return false;
 	}
 
-	bool operator <= (int fract){
+	bool operator <= (int fract) const {
 		if ((*this < fract) || (*this == fract)) return true;
 		return false;
 	}
 
-	bool operator >= (Fraction& fract){
+	bool operator >= (const Fraction& fract) const {
 		return fract <= *this;
 	}
 
-	bool operator >= (int fract){
+	bool operator >= (int fract) const {
 		Fraction tmp(fract);
 		return tmp <= *this;
 	}
@@ -205,43 +206,44 @@ public:
 		denominator = denominator_;
 	}
 };
-
+//Polynomial
 class Polinomial{
 private:
 	vector<Fraction> factor;
 
 public:	
-	Fraction operator[](int i) {  
+	Fraction& operator[](int i) {  
 		return factor[i];
 	}
 
-	const Fraction operator[](int i) const {
+	const Fraction& operator[](int i) const {
 		return factor[i];
 	}
 
 	int degree() const{
-		return factor.size();
+		return static_cast<int>(factor.size()) - 1;
 	}
 
 	void setDegree(int degree){
 		factor.resize(degree);
 	}
 
-	Polinomial(Polinomial& p){
+	Polinomial(const Polinomial& p){
 		factor.assign(p.degree(), 0);
 		for(int i = 0; i < p.degree(); i++){
 			factor[i] = p[i];
 		}
 	}
 
-	Polinomial operator = (Polinomial& p){
+	Polinomial operator = (const Polinomial& p){
 		factor.assign(p.degree(), 0);
 		for(int i = 0; i < p.degree(); i++){
 			factor[i] = p[i];
 		}
 		return *this;
 	}
-	bool operator != (int number){
+
+	bool operator != (int number)  const {
 		if (number == 0){
 			for(int i = 0; i < degree(); i++){
 				if (factor[i].getNumerator() != 0) return true;
@@ -250,12 +252,13 @@ public:
 		}
 		return false;
 	}
-	bool operator == (Polinomial& p){
+
+	bool operator == (const Polinomial& p) const {
 		if (!(*this < p) && (*this <= p)) return true;
 		else return false;
 	}
 
-	bool operator == (int p){
+	bool operator == (int p) const {
 		if (p == 0){
 			for(unsigned int i = 0; i < factor.size(); i++){
 				if (factor[i] != 0) return false;
@@ -264,7 +267,8 @@ public:
 		}
 		else return false;
 	}
-	bool operator < (Polinomial& p) {
+
+	bool operator < (const Polinomial& p) const {
 		if (degree() < p.degree()) return true;
 		else if (degree() > p.degree()) return false;
 		else{
@@ -275,7 +279,7 @@ public:
 		}
 		return false;
 	}
-	bool operator <= (Polinomial& p) {
+	bool operator <= (const Polinomial& p) const {
 		if (degree() < p.degree()) return true;
 		else if (degree() > p.degree()) return false;
 		else{
@@ -287,7 +291,7 @@ public:
 		return true;
 	}
 
-	Polinomial operator - (Polinomial& p){
+	Polinomial operator - (const Polinomial& p) const{
 		Polinomial result;
 		if (degree() > p.degree()){ 
 			result.setDegree(degree());
@@ -411,15 +415,13 @@ public:
 };
 
 template<class T>
-T GCD(T object1, T object2){
-	T tmp1 = object1;
-	T tmp2 = object2;
-	while (tmp2 != 0){
-		T tmp3 = tmp2;
-		tmp2 = tmp1 % tmp2;
-		tmp1 = tmp3;
+T GCD(T first, T second){
+	while (second != 0){
+		T tmp3 = second;
+		second = first % second;
+		first = tmp3;
 	}
-	return tmp1;
+	return first;
 }
 
 int RemainderNonnegative(int number1, int number2){
@@ -458,6 +460,7 @@ void checkFunction(){
 	p5.setCertainFactor(2, f);
 	Polinomial p1(3);
 	Polinomial p2(3);
+	p1[0] = g;
 	p1.setCertainFactor(0, g);
 	p1.setCertainFactor(1, d);
 	p1.setCertainFactor(2, g);
